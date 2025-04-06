@@ -1,6 +1,7 @@
 from datetime import datetime
 from dependencies.database import Base
 from sqlalchemy import Column, Integer, String, DateTime, JSON
+from models import activity
 
 class Subscription(Base):
     __tablename__ = "webpush_notifications_subscriptions"
@@ -9,6 +10,8 @@ class Subscription(Base):
     user_id = Column(String, nullable=False)
     subscription = Column(JSON, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+    
 
 
 
