@@ -140,24 +140,33 @@ async def send_webpush(request: NotificationRequest):
         channel = await pool.get_channel()
 
         try:
-            if request.recipient_type == RecipientType.SINGLE:
-                message = {
-                    "type": request.type,
-                    "payload": request.payload,
-                    "recipient": request.recipient,
-                    "priority": request.priority
-                }
+            # Base message structure for all types
+            message = {
+                "type": request.type,
+                "payload": request.payload,
+                "recipient": request.recipient,
+                "priority": request.priority
+            }
+
+            if request.recipient_type == RecipientType.UNICAST:
                 logger.info(
-                    f"Sending notification to single recipient: {message['recipient']}")
+                    f"Sending UNICAST notification to: {message['recipient']}")
                 await publish_message(channel, message, request.priority)
 
-            elif request.recipient_type == RecipientType.GROUP:
+            elif request.recipient_type == RecipientType.MULTICAST:
                 logger.info(
-                    f"Sending notification to group: {request.recipient}")
+                    f"Sending MULTICAST notification to group: {request.recipient}")
                 task_service = TaskService()
                 task_service.add_task(send_group_notifications, request)
                 background_tasks = task_service.get_tasks()
                 await background_tasks()
+
+            elif request.recipient_type == RecipientType.BROADCAST:
+                logger.info(
+                    "Sending BROADCAST notification to all subscribers")
+                # Ensure recipient is None for broadcast
+                message["recipient"] = None
+                await publish_message(channel, message, request.priority)
 
         finally:
             await pool.return_channel(channel)
