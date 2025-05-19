@@ -5,6 +5,7 @@ import logging
 
 logger = logging.getLogger("coffeebreak.webpush-notifications")
 
+IDENTIFIER = "webpush-notifications"
 NAME = "Web Push Notifications Plugin"
 DESCRIPTION = "A plugin for sending web push notifications"
 
