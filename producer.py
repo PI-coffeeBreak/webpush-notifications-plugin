@@ -3,10 +3,10 @@ import os
 import logging
 import json
 from typing import Optional, Dict, Any
-from coffeebreak.schemas.notification import NotificationRequest, RecipientType
+from coffeebreak.schemas import NotificationRequest, RecipientType
 import asyncio
-from coffeebreak.utils.task import TaskService
-from coffeebreak.services.groups import get_users_in_group
+from coffeebreak import TaskService
+from coffeebreak.auth import get_users_in_group
 
 logger = logging.getLogger("coffeebreak.webpush")
 

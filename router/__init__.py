@@ -1,4 +1,4 @@
-from coffeebreak.utils.api import Router
+from coffeebreak import Router
 from .subscription import router as subscription_router
 
 router = Router()
