@@ -5,3 +5,6 @@ __pycache__/
 *.pyw
 *.pyz
 *.pywz
+
+# Build output
+.build/
