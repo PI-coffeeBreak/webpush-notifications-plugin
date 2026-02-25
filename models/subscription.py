@@ -1,8 +1,7 @@
 from datetime import datetime
-from dependencies.database import Base
+from coffeebreak.db import ModelBase as Base
 from sqlalchemy import Column, Integer, String, DateTime, JSON
 from sqlalchemy.types import JSON as SQLAlchemyJSON
-from models import activity
 
 
 class Subscription(Base):

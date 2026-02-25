@@ -1,0 +1,13 @@
+[project]
+name = "webpush-notifications-plugin"
+version = "0.1.0"
+dependencies = [
+    "SQLAlchemy",
+    "pika",
+    "aio_pika",
+]
+
+[tool.coffeebreak]
+identifier = "webpush-notifications"
+name = "Web Push Notifications Plugin"
+description = "A plugin for sending web push notifications"

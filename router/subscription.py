@@ -1,7 +1,8 @@
-from utils.api import Router, Depends, HTTPException
-from dependencies.auth import get_current_user
+from coffeebreak import Router
+from fastapi import Depends, HTTPException
+from coffeebreak.auth import get_current_user
 from sqlalchemy.orm import Session
-from dependencies.database import get_db
+from coffeebreak.db import DB as get_db
 from ..models.subscription import Subscription
 from ..schemas import SubscriptionCreate, WebPushSubscription
 import logging
