@@ -133,40 +133,49 @@ async def publish_message(channel: aio_pika.Channel, message: Dict[str, Any], pr
             await asyncio.sleep(retry_delay * (attempt + 1))
 
 
-async def send_webpush(request: NotificationRequest):
+def normalize_notification_request(request: NotificationRequest | Dict[str, Any]) -> NotificationRequest:
+    if isinstance(request, NotificationRequest):
+        return request
+    if isinstance(request, dict):
+        return NotificationRequest(**request)
+    raise TypeError(f"Unsupported notification payload type: {type(request)}")
+
+
+async def send_webpush(request: NotificationRequest | Dict[str, Any]):
     try:
-        logger.info(f"Preparing to send webpush notification: {request}")
+        notification = normalize_notification_request(request)
+        logger.info(f"Preparing to send webpush notification: {notification}")
         pool = RabbitMQConnectionPool()
         channel = await pool.get_channel()
 
         try:
             # Base message structure for all types
             message = {
-                "type": request.type,
-                "payload": request.payload,
-                "recipient": request.recipient,
-                "priority": request.priority
+                "type": notification.type,
+                "payload": notification.payload,
+                "recipient": notification.recipient,
+                "priority": notification.priority
             }
 
-            if request.recipient_type == RecipientType.UNICAST:
+            if notification.recipient_type == RecipientType.UNICAST:
                 logger.info(
                     f"Sending UNICAST notification to: {message['recipient']}")
-                await publish_message(channel, message, request.priority)
+                await publish_message(channel, message, notification.priority)
 
-            elif request.recipient_type == RecipientType.MULTICAST:
+            elif notification.recipient_type == RecipientType.MULTICAST:
                 logger.info(
-                    f"Sending MULTICAST notification to group: {request.recipient}")
+                    f"Sending MULTICAST notification to group: {notification.recipient}")
                 task_service = TaskService()
-                task_service.add_task(send_group_notifications, request)
+                task_service.add_task(send_group_notifications, notification)
                 background_tasks = task_service.get_tasks()
                 await background_tasks()
 
-            elif request.recipient_type == RecipientType.BROADCAST:
+            elif notification.recipient_type == RecipientType.BROADCAST:
                 logger.info(
                     "Sending BROADCAST notification to all subscribers")
                 # Ensure recipient is None for broadcast
                 message["recipient"] = None
-                await publish_message(channel, message, request.priority)
+                await publish_message(channel, message, notification.priority)
 
         finally:
             await pool.return_channel(channel)
@@ -176,13 +185,14 @@ async def send_webpush(request: NotificationRequest):
         raise
 
 
-async def send_group_notifications(request: NotificationRequest):
+async def send_group_notifications(request: NotificationRequest | Dict[str, Any]):
     try:
-        logger.info(f"Fetching users in group: {request.recipient}")
-        users = get_users_in_group(request.recipient)
+        notification = normalize_notification_request(request)
+        logger.info(f"Fetching users in group: {notification.recipient}")
+        users = get_users_in_group(notification.recipient)
 
         if not users:
-            logger.warning(f"No users found in group: {request.recipient}")
+            logger.warning(f"No users found in group: {notification.recipient}")
             return
 
         pool = RabbitMQConnectionPool()
@@ -191,12 +201,12 @@ async def send_group_notifications(request: NotificationRequest):
         try:
             for user in users:
                 message = {
-                    "type": request.type,
-                    "payload": request.payload,
+                    "type": notification.type,
+                    "payload": notification.payload,
                     "recipient": user['id'],
-                    "priority": request.priority
+                    "priority": notification.priority
                 }
-                await publish_message(channel, message, request.priority)
+                await publish_message(channel, message, notification.priority)
                 logger.debug(f"Notification sent to user {user['id']}")
 
         finally:
